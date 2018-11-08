@@ -53,10 +53,13 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
-
+#include "fonts.h"
+#include "ssd1306.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
-
+#include "gpio.h"
+#include "Task_manager.h"
+#include "usart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -76,6 +79,21 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+xSemaphoreHandle 	Semaphore_Modbus_Rx, Semaphore_Modbus_Tx;
+
+extern FontDef font_7x12_RU;
+extern FontDef font_7x12;
+extern FontDef font_8x15_RU;
+extern FontDef font_8x14;
+extern FontDef font_5x10_RU;
+extern FontDef font_5x10;
+
+uint8_t error_crc = 0;
+uint8_t status = 0;
+
+
+volatile uint8_t boot_transmitBuffer[8];
+volatile uint8_t boot_receiveBuffer[256];
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
@@ -87,7 +105,7 @@ osThreadId myTask17Handle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-   
+void JumpToApplication(uint32_t ADDRESS);   
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -157,7 +175,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
+		vSemaphoreCreateBinary(Semaphore_Modbus_Rx);
+		vSemaphoreCreateBinary(Semaphore_Modbus_Tx);
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -209,10 +228,14 @@ void StartDefaultTask(void const * argument)
 {
 
   /* USER CODE BEGIN StartDefaultTask */
+	
+	Task_manager_Init();
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+		Task_manager_LoadCPU();		
+		
+    osDelay(1000);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -230,7 +253,7 @@ void Lights_Task(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(1000);
   }
   /* USER CODE END Lights_Task */
 }
@@ -245,10 +268,88 @@ void Lights_Task(void const * argument)
 void Display_Task(void const * argument)
 {
   /* USER CODE BEGIN Display_Task */
+	uint8_t temp_stat = 0;
+	char buffer[64];
+	// CS# (This pin is the chip select input. (active LOW))
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
+	
+	ssd1306_Init();
+	
   /* Infinite loop */
   for(;;)
-  {
-    osDelay(1);
+  {		
+		
+				if(error_crc == 1)
+				{
+					ssd1306_Fill(0);
+					ssd1306_SetCursor(0,0);
+					ssd1306_WriteString("Ошибка",font_8x15_RU,1);
+					ssd1306_SetCursor(0,15);
+					ssd1306_WriteString("CRC",font_8x14,1);				
+					
+//					ssd1306_SetCursor(30,15);				
+//					snprintf(buffer, sizeof buffer, "%d", boot_timer_counter);				
+//					ssd1306_WriteString(buffer,font_8x14,1);	
+					ssd1306_UpdateScreen();		
+				}
+				
+				if(error_crc == 0 && status == 0)
+				{
+					ssd1306_Fill(0);
+					ssd1306_SetCursor(0,0);
+					ssd1306_WriteString("Загруз",font_8x15_RU,1);
+					ssd1306_WriteString("-",font_8x14,1);
+					ssd1306_SetCursor(0,15);				
+					ssd1306_WriteString("чик",font_8x15_RU,1);
+
+//					ssd1306_SetCursor(0,30);				
+					snprintf(buffer, sizeof buffer, " %.01f", VERSION);				
+					ssd1306_WriteString(buffer,font_8x14,1);	
+									
+					
+//					ssd1306_SetCursor(30,15);				
+//					snprintf(buffer, sizeof buffer, "%d", boot_timer_counter);				
+//					ssd1306_WriteString(buffer,font_8x14,1);	
+					ssd1306_UpdateScreen();		
+				}
+				
+				if (status == 1)
+				{
+					ssd1306_Fill(0);
+					ssd1306_SetCursor(0,0);
+					ssd1306_WriteString("FLASH",font_8x14,1);
+					ssd1306_SetCursor(0,15);	
+					ssd1306_WriteString("очищена",font_8x15_RU,1);					
+						
+					ssd1306_UpdateScreen();	
+				}
+
+				if (status == 2)
+				{
+					ssd1306_Fill(0);
+					ssd1306_SetCursor(0,0);
+					ssd1306_WriteString("Обнов",font_8x15_RU,1);					
+					ssd1306_WriteString("-",font_8x14,1);					
+					ssd1306_SetCursor(0,15);	
+					ssd1306_WriteString("ление",font_8x15_RU,1);					
+					ssd1306_SetCursor(0,30);	
+					ssd1306_WriteString("ПО",font_8x15_RU,1);					
+					ssd1306_WriteString("...",font_8x14,1);
+						
+					ssd1306_UpdateScreen();	
+				}
+				
+				if (status == 3)
+				{
+					ssd1306_Fill(0);
+					ssd1306_SetCursor(0,15);
+					ssd1306_WriteString("УСПЕШНО",font_8x15_RU,1);										
+						
+					ssd1306_UpdateScreen();	
+				}				
+			
+	
+			osDelay(100);
   }
   /* USER CODE END Display_Task */
 }
@@ -263,10 +364,29 @@ void Display_Task(void const * argument)
 void Modbus_Receive_Task(void const * argument)
 {
   /* USER CODE BEGIN Modbus_Receive_Task */
+	
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+		xSemaphoreTake( Semaphore_Modbus_Rx, portMAX_DELAY );					
+						
+		__HAL_UART_CLEAR_IT(&huart2, UART_CLEAR_IDLEF); 				
+		__HAL_UART_ENABLE_IT(&huart2, UART_IT_IDLE);
+		
+		HAL_UART_DMAStop(&huart2); 
+		
+		HAL_UART_Receive_DMA(&huart2, boot_receiveBuffer, 8);
+
+		//boot_timer_counter = 0;
+		
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
+		osDelay(1);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET);
+		
+		//HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
+		
+		xSemaphoreGive( Semaphore_Modbus_Tx );	
+    
   }
   /* USER CODE END Modbus_Receive_Task */
 }
@@ -309,7 +429,19 @@ void Data_Storage_Task(void const * argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-     
+void JumpToApplication(uint32_t ADDRESS)
+{
+		typedef  void (*pFunction)(void);
+		uint32_t  JumpAddress = *(__IO uint32_t*)(ADDRESS + 4);
+    pFunction Jump = (pFunction)JumpAddress;
+        
+    HAL_DeInit();
+    
+    __set_CONTROL(0); 
+    __set_MSP(*(__IO uint32_t*) ADDRESS);
+		SCB->VTOR = ADDRESS;
+		Jump();		 
+}     
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -94,6 +94,9 @@
 /* #define USE_FULL_ASSERT    1U */
 
 /* USER CODE BEGIN Private defines */
+#define VERSION 4.1
+
+#define APP_START_ADDRESS 0x8010000
 
 /* USER CODE END Private defines */
 

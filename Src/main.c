@@ -119,6 +119,12 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
+	HAL_TIM_Base_Start_IT(&htim6);
+	HAL_TIM_Base_Start_IT(&htim7);
+
+	__HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);	
+	__HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
+	__HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
