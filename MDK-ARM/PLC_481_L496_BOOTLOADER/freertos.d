@@ -53,3 +53,5 @@ plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4x
 plc_481_l496_bootloader\freertos.o: ..\Src\display\ssd1306.h
 plc_481_l496_bootloader\freertos.o: ..\Src\display\fonts.h
 plc_481_l496_bootloader\freertos.o: ../Inc/gpio.h
+plc_481_l496_bootloader\freertos.o: ../Src/Task_manager.h
+plc_481_l496_bootloader\freertos.o: ../Inc/usart.h

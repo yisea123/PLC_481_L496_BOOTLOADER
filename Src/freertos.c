@@ -58,6 +58,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
 #include "gpio.h"
+#include "Task_manager.h"
+#include "usart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,6 +79,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+xSemaphoreHandle 	Semaphore_Modbus_Rx, Semaphore_Modbus_Tx;
+
 extern FontDef font_7x12_RU;
 extern FontDef font_7x12;
 extern FontDef font_8x15_RU;
@@ -88,6 +92,9 @@ uint8_t error_crc = 0;
 uint8_t status = 0;
 
 
+volatile uint8_t boot_transmitBuffer[8];
+volatile uint8_t boot_receiveBuffer[256];
+
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 osThreadId myTask09Handle;
@@ -98,7 +105,7 @@ osThreadId myTask17Handle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-   
+void JumpToApplication(uint32_t ADDRESS);   
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void const * argument);
@@ -168,7 +175,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
+		vSemaphoreCreateBinary(Semaphore_Modbus_Rx);
+		vSemaphoreCreateBinary(Semaphore_Modbus_Tx);
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -356,10 +364,29 @@ void Display_Task(void const * argument)
 void Modbus_Receive_Task(void const * argument)
 {
   /* USER CODE BEGIN Modbus_Receive_Task */
+	
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+		xSemaphoreTake( Semaphore_Modbus_Rx, portMAX_DELAY );					
+						
+		__HAL_UART_CLEAR_IT(&huart2, UART_CLEAR_IDLEF); 				
+		__HAL_UART_ENABLE_IT(&huart2, UART_IT_IDLE);
+		
+		HAL_UART_DMAStop(&huart2); 
+		
+		HAL_UART_Receive_DMA(&huart2, boot_receiveBuffer, 8);
+
+		//boot_timer_counter = 0;
+		
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
+		osDelay(1);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET);
+		
+		//HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
+		
+		xSemaphoreGive( Semaphore_Modbus_Tx );	
+    
   }
   /* USER CODE END Modbus_Receive_Task */
 }
@@ -402,7 +429,19 @@ void Data_Storage_Task(void const * argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-     
+void JumpToApplication(uint32_t ADDRESS)
+{
+		typedef  void (*pFunction)(void);
+		uint32_t  JumpAddress = *(__IO uint32_t*)(ADDRESS + 4);
+    pFunction Jump = (pFunction)JumpAddress;
+        
+    HAL_DeInit();
+    
+    __set_CONTROL(0); 
+    __set_MSP(*(__IO uint32_t*) ADDRESS);
+		SCB->VTOR = ADDRESS;
+		Jump();		 
+}     
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
