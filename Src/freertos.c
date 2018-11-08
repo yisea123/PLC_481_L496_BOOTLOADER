@@ -53,10 +53,11 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
-
+#include "fonts.h"
+#include "ssd1306.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
-
+#include "gpio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -76,6 +77,16 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+extern FontDef font_7x12_RU;
+extern FontDef font_7x12;
+extern FontDef font_8x15_RU;
+extern FontDef font_8x14;
+extern FontDef font_5x10_RU;
+extern FontDef font_5x10;
+
+uint8_t error_crc = 0;
+uint8_t status = 0;
+
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
@@ -209,10 +220,14 @@ void StartDefaultTask(void const * argument)
 {
 
   /* USER CODE BEGIN StartDefaultTask */
+	
+	Task_manager_Init();
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+		Task_manager_LoadCPU();		
+		
+    osDelay(1000);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -230,7 +245,7 @@ void Lights_Task(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(1000);
   }
   /* USER CODE END Lights_Task */
 }
@@ -245,10 +260,88 @@ void Lights_Task(void const * argument)
 void Display_Task(void const * argument)
 {
   /* USER CODE BEGIN Display_Task */
+	uint8_t temp_stat = 0;
+	char buffer[64];
+	// CS# (This pin is the chip select input. (active LOW))
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
+	
+	ssd1306_Init();
+	
   /* Infinite loop */
   for(;;)
-  {
-    osDelay(1);
+  {		
+		
+				if(error_crc == 1)
+				{
+					ssd1306_Fill(0);
+					ssd1306_SetCursor(0,0);
+					ssd1306_WriteString("Ошибка",font_8x15_RU,1);
+					ssd1306_SetCursor(0,15);
+					ssd1306_WriteString("CRC",font_8x14,1);				
+					
+//					ssd1306_SetCursor(30,15);				
+//					snprintf(buffer, sizeof buffer, "%d", boot_timer_counter);				
+//					ssd1306_WriteString(buffer,font_8x14,1);	
+					ssd1306_UpdateScreen();		
+				}
+				
+				if(error_crc == 0 && status == 0)
+				{
+					ssd1306_Fill(0);
+					ssd1306_SetCursor(0,0);
+					ssd1306_WriteString("Загруз",font_8x15_RU,1);
+					ssd1306_WriteString("-",font_8x14,1);
+					ssd1306_SetCursor(0,15);				
+					ssd1306_WriteString("чик",font_8x15_RU,1);
+
+//					ssd1306_SetCursor(0,30);				
+					snprintf(buffer, sizeof buffer, " %.01f", VERSION);				
+					ssd1306_WriteString(buffer,font_8x14,1);	
+									
+					
+//					ssd1306_SetCursor(30,15);				
+//					snprintf(buffer, sizeof buffer, "%d", boot_timer_counter);				
+//					ssd1306_WriteString(buffer,font_8x14,1);	
+					ssd1306_UpdateScreen();		
+				}
+				
+				if (status == 1)
+				{
+					ssd1306_Fill(0);
+					ssd1306_SetCursor(0,0);
+					ssd1306_WriteString("FLASH",font_8x14,1);
+					ssd1306_SetCursor(0,15);	
+					ssd1306_WriteString("очищена",font_8x15_RU,1);					
+						
+					ssd1306_UpdateScreen();	
+				}
+
+				if (status == 2)
+				{
+					ssd1306_Fill(0);
+					ssd1306_SetCursor(0,0);
+					ssd1306_WriteString("Обнов",font_8x15_RU,1);					
+					ssd1306_WriteString("-",font_8x14,1);					
+					ssd1306_SetCursor(0,15);	
+					ssd1306_WriteString("ление",font_8x15_RU,1);					
+					ssd1306_SetCursor(0,30);	
+					ssd1306_WriteString("ПО",font_8x15_RU,1);					
+					ssd1306_WriteString("...",font_8x14,1);
+						
+					ssd1306_UpdateScreen();	
+				}
+				
+				if (status == 3)
+				{
+					ssd1306_Fill(0);
+					ssd1306_SetCursor(0,15);
+					ssd1306_WriteString("УСПЕШНО",font_8x15_RU,1);										
+						
+					ssd1306_UpdateScreen();	
+				}				
+			
+	
+			osDelay(100);
   }
   /* USER CODE END Display_Task */
 }

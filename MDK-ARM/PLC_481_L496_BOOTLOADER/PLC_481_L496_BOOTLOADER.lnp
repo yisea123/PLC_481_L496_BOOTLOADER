@@ -15,6 +15,7 @@
 "plc_481_l496_bootloader\stm32l4xx_it.o"
 "plc_481_l496_bootloader\stm32l4xx_hal_msp.o"
 "plc_481_l496_bootloader\stm32l4xx_hal_timebase_tim.o"
+"plc_481_l496_bootloader\task_manager.o"
 "plc_481_l496_bootloader\stm32l4xx_hal_spi.o"
 "plc_481_l496_bootloader\stm32l4xx_hal_spi_ex.o"
 "plc_481_l496_bootloader\stm32l4xx_hal_tim.o"

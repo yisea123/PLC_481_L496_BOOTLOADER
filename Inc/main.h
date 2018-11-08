@@ -94,7 +94,7 @@
 /* #define USE_FULL_ASSERT    1U */
 
 /* USER CODE BEGIN Private defines */
-
+#define VERSION 4.1
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
