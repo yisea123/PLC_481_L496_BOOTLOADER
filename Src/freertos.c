@@ -53,13 +53,16 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
-#include "fonts.h"
-#include "ssd1306.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
 #include "gpio.h"
 #include "Task_manager.h"
+#include "Flash_manager.h"
 #include "usart.h"
+#include "fonts.h"
+#include "iwdg.h"
+#include "stm32l4xx_hal_flash.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -79,7 +82,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-xSemaphoreHandle 	Semaphore_Modbus_Rx, Semaphore_Modbus_Tx;
+xSemaphoreHandle 	Semaphore_Modbus_Rx, Semaphore_Modbus_Tx, Semaphore_Update, Semaphore_Jump;
 
 extern FontDef font_7x12_RU;
 extern FontDef font_7x12;
@@ -89,19 +92,32 @@ extern FontDef font_5x10_RU;
 extern FontDef font_5x10;
 
 uint8_t error_crc = 0;
+uint8_t worker_status = 0;
 uint8_t status = 0;
+
+uint8_t status1 = 0;
+uint8_t status2 = 0;
+uint8_t status3 = 0;
 
 
 volatile uint8_t boot_transmitBuffer[8];
 volatile uint8_t boot_receiveBuffer[256];
 
+volatile uint32_t byte_size = 0;
+volatile uint16_t crc_data = 0;
+volatile uint16_t byte_bunch = 0;
+volatile uint32_t byte_counter = 0;
+volatile uint16_t crc_flash = 0;
+volatile uint64_t data = 0;
+
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
-osThreadId myTask09Handle;
-osThreadId myTask11Handle;
-osThreadId myTask13Handle;
-osThreadId myTask14Handle;
-osThreadId myTask17Handle;
+osThreadId myTask01Handle;
+osThreadId myTask02Handle;
+osThreadId myTask03Handle;
+osThreadId myTask04Handle;
+osThreadId myTask05Handle;
+osThreadId myTask06Handle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -113,7 +129,8 @@ void Lights_Task(void const * argument);
 void Display_Task(void const * argument);
 void Modbus_Receive_Task(void const * argument);
 void Modbus_Transmit_Task(void const * argument);
-void Data_Storage_Task(void const * argument);
+void Update_Flash_Task(void const * argument);
+void Jump_Task(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -177,6 +194,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_SEMAPHORES */
 		vSemaphoreCreateBinary(Semaphore_Modbus_Rx);
 		vSemaphoreCreateBinary(Semaphore_Modbus_Tx);
+		vSemaphoreCreateBinary(Semaphore_Update);
+		vSemaphoreCreateBinary(Semaphore_Jump);
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -188,25 +207,29 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(defaultTask, StartDefaultTask, osPriorityIdle, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  /* definition and creation of myTask09 */
-  osThreadDef(myTask09, Lights_Task, osPriorityNormal, 0, 128);
-  myTask09Handle = osThreadCreate(osThread(myTask09), NULL);
+  /* definition and creation of myTask01 */
+  osThreadDef(myTask01, Lights_Task, osPriorityNormal, 0, 128);
+  myTask01Handle = osThreadCreate(osThread(myTask01), NULL);
 
-  /* definition and creation of myTask11 */
-  osThreadDef(myTask11, Display_Task, osPriorityNormal, 0, 128);
-  myTask11Handle = osThreadCreate(osThread(myTask11), NULL);
+  /* definition and creation of myTask02 */
+  osThreadDef(myTask02, Display_Task, osPriorityNormal, 0, 128);
+  myTask02Handle = osThreadCreate(osThread(myTask02), NULL);
 
-  /* definition and creation of myTask13 */
-  osThreadDef(myTask13, Modbus_Receive_Task, osPriorityNormal, 0, 128);
-  myTask13Handle = osThreadCreate(osThread(myTask13), NULL);
+  /* definition and creation of myTask03 */
+  osThreadDef(myTask03, Modbus_Receive_Task, osPriorityNormal, 0, 128);
+  myTask03Handle = osThreadCreate(osThread(myTask03), NULL);
 
-  /* definition and creation of myTask14 */
-  osThreadDef(myTask14, Modbus_Transmit_Task, osPriorityNormal, 0, 128);
-  myTask14Handle = osThreadCreate(osThread(myTask14), NULL);
+  /* definition and creation of myTask04 */
+  osThreadDef(myTask04, Modbus_Transmit_Task, osPriorityNormal, 0, 128);
+  myTask04Handle = osThreadCreate(osThread(myTask04), NULL);
 
-  /* definition and creation of myTask17 */
-  osThreadDef(myTask17, Data_Storage_Task, osPriorityNormal, 0, 128);
-  myTask17Handle = osThreadCreate(osThread(myTask17), NULL);
+  /* definition and creation of myTask05 */
+  osThreadDef(myTask05, Update_Flash_Task, osPriorityNormal, 0, 128);
+  myTask05Handle = osThreadCreate(osThread(myTask05), NULL);
+
+  /* definition and creation of myTask06 */
+  osThreadDef(myTask06, Jump_Task, osPriorityNormal, 0, 128);
+  myTask06Handle = osThreadCreate(osThread(myTask06), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -234,7 +257,7 @@ void StartDefaultTask(void const * argument)
   for(;;)
   {
 		Task_manager_LoadCPU();		
-		
+		HAL_IWDG_Refresh(&hiwdg);
     osDelay(1000);
   }
   /* USER CODE END StartDefaultTask */
@@ -293,7 +316,7 @@ void Display_Task(void const * argument)
 					ssd1306_UpdateScreen();		
 				}
 				
-				if(error_crc == 0 && status == 0)
+				if(error_crc == 0 && worker_status == 0)
 				{
 					ssd1306_Fill(0);
 					ssd1306_SetCursor(0,0);
@@ -313,18 +336,7 @@ void Display_Task(void const * argument)
 					ssd1306_UpdateScreen();		
 				}
 				
-				if (status == 1)
-				{
-					ssd1306_Fill(0);
-					ssd1306_SetCursor(0,0);
-					ssd1306_WriteString("FLASH",font_8x14,1);
-					ssd1306_SetCursor(0,15);	
-					ssd1306_WriteString("очищена",font_8x15_RU,1);					
-						
-					ssd1306_UpdateScreen();	
-				}
-
-				if (status == 2)
+				if (worker_status == 3)
 				{
 					ssd1306_Fill(0);
 					ssd1306_SetCursor(0,0);
@@ -339,7 +351,7 @@ void Display_Task(void const * argument)
 					ssd1306_UpdateScreen();	
 				}
 				
-				if (status == 3)
+				if (worker_status == 4)
 				{
 					ssd1306_Fill(0);
 					ssd1306_SetCursor(0,15);
@@ -379,13 +391,8 @@ void Modbus_Receive_Task(void const * argument)
 
 		//boot_timer_counter = 0;
 		
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
-		osDelay(1);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET);
+		xSemaphoreGive( Semaphore_Update );		
 		
-		//HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
-		
-		xSemaphoreGive( Semaphore_Modbus_Tx );	
     
   }
   /* USER CODE END Modbus_Receive_Task */
@@ -401,30 +408,188 @@ void Modbus_Receive_Task(void const * argument)
 void Modbus_Transmit_Task(void const * argument)
 {
   /* USER CODE BEGIN Modbus_Transmit_Task */
+	
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+		xSemaphoreTake( Semaphore_Modbus_Tx, portMAX_DELAY );					
+		
+    
   }
   /* USER CODE END Modbus_Transmit_Task */
 }
 
-/* USER CODE BEGIN Header_Data_Storage_Task */
+/* USER CODE BEGIN Header_Update_Flash_Task */
 /**
-* @brief Function implementing the myTask17 thread.
+* @brief Function implementing the myTask05 thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_Data_Storage_Task */
-void Data_Storage_Task(void const * argument)
+/* USER CODE END Header_Update_Flash_Task */
+void Update_Flash_Task(void const * argument)
 {
-  /* USER CODE BEGIN Data_Storage_Task */
+  /* USER CODE BEGIN Update_Flash_Task */
+	
+	
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+		xSemaphoreTake( Semaphore_Update, portMAX_DELAY );					
+
+	  data = ((uint64_t) boot_receiveBuffer[0]) + 
+					((uint64_t) (boot_receiveBuffer[1]) << 8) + 
+					((uint64_t) (boot_receiveBuffer[2]) << 16) + 
+					((uint64_t) (boot_receiveBuffer[3]) << 24) + 
+					((uint64_t) (boot_receiveBuffer[4]) << 32) + 
+					((uint64_t) (boot_receiveBuffer[5]) << 40) + 
+					((uint64_t) (boot_receiveBuffer[6]) << 48) + 
+					((uint64_t) (boot_receiveBuffer[7]) << 56);
+		
+		//Programm
+		if (worker_status == 3)
+		{			
+				status = HAL_FLASH_Unlock();							
+				//__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_PGSERR);
+				status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, (APP_START_ADDRESS) + 8*byte_bunch, data);						
+				
+				HAL_FLASH_Lock();	
+				
+				byte_bunch++; byte_counter += 8;
+			
+				if (byte_counter >= byte_size) 
+				{
+					xSemaphoreGive( Semaphore_Jump );		
+				}
+											
+		}
+
+		//Get crc
+		if (worker_status == 2)
+		{
+		
+//				byte_size = (uint32_t) boot_receiveBuffer[0] + (boot_receiveBuffer[1] << 8) + (boot_receiveBuffer[2] << 16) + (boot_receiveBuffer[3] << 32);
+//				crc_data = (uint32_t) boot_receiveBuffer[4] + (boot_receiveBuffer[5] << 8) + (boot_receiveBuffer[6] << 16) + (boot_receiveBuffer[7] << 32);
+				
+				crc_data = data;				
+				worker_status = 3;
+				byte_counter = 0;
+				byte_bunch = 0;
+				error_crc = 0;	
+		}
+		
+		//Get size
+		if (worker_status == 1)
+		{				
+				byte_size = data >> 32;				
+				worker_status = 2;
+				byte_counter = 0;
+				byte_bunch = 0;
+				error_crc = 0;	
+		}		
+		
+		//Erase	
+		if (boot_receiveBuffer[0] == 0x04 && 
+				boot_receiveBuffer[1] == 0x08 && 
+				boot_receiveBuffer[2] == 0x01 && 
+				boot_receiveBuffer[3] == 0x00 && 
+				boot_receiveBuffer[4] == 0x00 && 
+				boot_receiveBuffer[5] == 0x00 && 
+				boot_receiveBuffer[6] == 0x00 && 
+				boot_receiveBuffer[7] == 0x00 && status == 0)
+		{		
+				worker_status = 1;
+			
+				FLASH_EraseInitTypeDef EraseInitStruct;					
+				uint32_t PAGEError = 0;
+				EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
+				EraseInitStruct.Banks = 1;
+				EraseInitStruct.Page = 32;
+				EraseInitStruct.NbPages = 40;
+			
+				status = HAL_FLASH_Unlock();	
+				osDelay(5);
+				__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_PGSERR);
+				
+				status = HAL_FLASHEx_Erase(&EraseInitStruct,&PAGEError);				
+				//status = HAL_FLASH_GetError();
+				
+				HAL_FLASH_Lock();				
+			
+				
+				
+		}		
+		
+		//Зажечь светодиод
+		HAL_GPIO_WritePin(GPIOC, SD2_Pin, GPIO_PIN_SET);
+		osDelay(1);
+		HAL_GPIO_WritePin(GPIOC, SD2_Pin, GPIO_PIN_RESET);		
+
+  }		   
+	
+
+  
+  /* USER CODE END Update_Flash_Task */
+}
+
+/* USER CODE BEGIN Header_Jump_Task */
+/**
+* @brief Function implementing the myTask06 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_Jump_Task */
+void Jump_Task(void const * argument)
+{
+  /* USER CODE BEGIN Jump_Task */
+  /* Infinite loop */
+  for(;;)
+  {
+		xSemaphoreTake( Semaphore_Jump, portMAX_DELAY );
+    				
+					crc_flash = flash_crc16(APP_START_ADDRESS, byte_size);
+					
+					if (crc_flash == crc_data)
+					{
+						
+						FLASH_EraseInitTypeDef EraseInitStruct;							
+						uint32_t PAGEError = 0;
+						EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
+						EraseInitStruct.Banks = 1;
+						EraseInitStruct.Page = 7;
+						EraseInitStruct.NbPages = 1;					
+
+						
+						status = HAL_FLASH_Unlock();	
+						__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_PGSERR);						
+						status1 = HAL_FLASHEx_Erase(&EraseInitStruct,&PAGEError);															
+						osDelay(5);
+											
+						status2 = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, APP_CRC_ADR, crc_data);																	
+						osDelay(5);
+						
+						status3 = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, APP_SIZE, byte_size);						
+						osDelay(5);					
+						
+						
+						HAL_FLASH_Lock();
+						
+						worker_status = 4;
+						osDelay(3000);									
+						
+						JumpToApplication(APP_START_ADDRESS);											
+					}
+					else 
+					{
+//						worker_status = 0;
+//						byte_counter = 0;
+//						byte_bunch = 0;		
+//						error_crc = 1;
+						
+					}					
+					
+				
   }
-  /* USER CODE END Data_Storage_Task */
+  /* USER CODE END Jump_Task */
 }
 
 /* Private application code --------------------------------------------------*/

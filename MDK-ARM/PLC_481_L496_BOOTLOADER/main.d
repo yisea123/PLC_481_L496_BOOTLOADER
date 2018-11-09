@@ -27,6 +27,7 @@ plc_481_l496_bootloader\main.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_ha
 plc_481_l496_bootloader\main.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash_ramfunc.h
 plc_481_l496_bootloader\main.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_i2c.h
 plc_481_l496_bootloader\main.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_i2c_ex.h
+plc_481_l496_bootloader\main.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_iwdg.h
 plc_481_l496_bootloader\main.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_pwr.h
 plc_481_l496_bootloader\main.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_pwr_ex.h
 plc_481_l496_bootloader\main.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_spi.h
@@ -50,6 +51,7 @@ plc_481_l496_bootloader\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/inclu
 plc_481_l496_bootloader\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h
 plc_481_l496_bootloader\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h
 plc_481_l496_bootloader\main.o: ../Inc/dma.h
+plc_481_l496_bootloader\main.o: ../Inc/iwdg.h
 plc_481_l496_bootloader\main.o: ../Inc/spi.h
 plc_481_l496_bootloader\main.o: ../Inc/tim.h
 plc_481_l496_bootloader\main.o: ../Inc/usart.h

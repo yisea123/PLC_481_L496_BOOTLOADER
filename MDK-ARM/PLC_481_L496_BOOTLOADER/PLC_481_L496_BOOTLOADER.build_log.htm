@@ -22,63 +22,105 @@ Dialog DLL:      TCM.DLL V1.14.4.0
  
 <h2>Project:</h2>
 D:\Repos\PLC_481_L496_BOOTLOADER\MDK-ARM\PLC_481_L496_BOOTLOADER.uvprojx
-Project File Date:  11/08/2018
+Project File Date:  11/09/2018
 
 <h2>Output:</h2>
 Build target 'PLC_481_L496_BOOTLOADER'
+compiling fonts.c...
+compiling ssd1306.c...
+..\Src\display\ssd1306.c(19): warning:  #177-D: variable "receive" was declared but never referenced
+        uint8_t* receive;
+..\Src\display\ssd1306.c(116): warning:  #188-D: enumerated type mixed with another type
+        ssd1306_Fill(0);
+..\Src\display\ssd1306.c(136): warning:  #177-D: variable "i" was declared but never referenced
+        uint16_t i;
+..\Src\display\ssd1306.c: 3 warnings, 0 errors
+compiling Task_manager.c...
+..\Src\Task_manager.c(160): warning:  #676-D: using out-of-scope declaration of variable "htim2" (declared at line 64 of "../Inc/tim.h")
+      return htim2.Instance->CNT;
+..\Src\Task_manager.c: 1 warning, 0 errors
+compiling flash_manager.c...
+compiling main.c...
+compiling gpio.c...
+compiling dma.c...
 compiling freertos.c...
-../Src/freertos.c(284): warning:  #188-D: enumerated type mixed with another type
+../Src/freertos.c(299): warning:  #223-D: function "ssd1306_Init" declared implicitly
+        ssd1306_Init();
+../Src/freertos.c(307): warning:  #223-D: function "ssd1306_Fill" declared implicitly
                                         ssd1306_Fill(0);
-../Src/freertos.c(286): warning:  #188-D: enumerated type mixed with another type
+../Src/freertos.c(308): warning:  #223-D: function "ssd1306_SetCursor" declared implicitly
+                                        ssd1306_SetCursor(0,0);
+../Src/freertos.c(309): warning:  #223-D: function "ssd1306_WriteString" declared implicitly
                                         ssd1306_WriteString("Ошибка",font_8x15_RU,1);
-../Src/freertos.c(288): warning:  #188-D: enumerated type mixed with another type
-                                        ssd1306_WriteString("CRC",font_8x14,1);                         
-../Src/freertos.c(298): warning:  #188-D: enumerated type mixed with another type
+../Src/freertos.c(316): warning:  #223-D: function "ssd1306_UpdateScreen" declared implicitly
+                                        ssd1306_UpdateScreen();         
+../Src/freertos.c(321): warning:  #223-D: function "ssd1306_Fill" declared implicitly
                                         ssd1306_Fill(0);
-../Src/freertos.c(300): warning:  #188-D: enumerated type mixed with another type
+../Src/freertos.c(322): warning:  #223-D: function "ssd1306_SetCursor" declared implicitly
+                                        ssd1306_SetCursor(0,0);
+../Src/freertos.c(323): warning:  #223-D: function "ssd1306_WriteString" declared implicitly
                                         ssd1306_WriteString("Загруз",font_8x15_RU,1);
-../Src/freertos.c(301): warning:  #188-D: enumerated type mixed with another type
-                                        ssd1306_WriteString("-",font_8x14,1);
-../Src/freertos.c(303): warning:  #188-D: enumerated type mixed with another type
-                                        ssd1306_WriteString("чик",font_8x15_RU,1);
-../Src/freertos.c(306): warning:  #223-D: function "snprintf" declared implicitly
+../Src/freertos.c(329): warning:  #223-D: function "snprintf" declared implicitly
                                         snprintf(buffer, sizeof buffer, " %.01f", VERSION);                             
-../Src/freertos.c(307): warning:  #188-D: enumerated type mixed with another type
-                                        ssd1306_WriteString(buffer,font_8x14,1);        
-../Src/freertos.c(318): warning:  #188-D: enumerated type mixed with another type
+../Src/freertos.c(336): warning:  #223-D: function "ssd1306_UpdateScreen" declared implicitly
+                                        ssd1306_UpdateScreen();         
+../Src/freertos.c(341): warning:  #223-D: function "ssd1306_Fill" declared implicitly
                                         ssd1306_Fill(0);
-../Src/freertos.c(320): warning:  #188-D: enumerated type mixed with another type
-                                        ssd1306_WriteString("FLASH",font_8x14,1);
-../Src/freertos.c(322): warning:  #188-D: enumerated type mixed with another type
-                                        ssd1306_WriteString("очищена",font_8x15_RU,1);                                  
-../Src/freertos.c(329): warning:  #188-D: enumerated type mixed with another type
-                                        ssd1306_Fill(0);
-../Src/freertos.c(331): warning:  #188-D: enumerated type mixed with another type
+../Src/freertos.c(342): warning:  #223-D: function "ssd1306_SetCursor" declared implicitly
+                                        ssd1306_SetCursor(0,0);
+../Src/freertos.c(343): warning:  #223-D: function "ssd1306_WriteString" declared implicitly
                                         ssd1306_WriteString("Обнов",font_8x15_RU,1);                                    
-../Src/freertos.c(332): warning:  #188-D: enumerated type mixed with another type
-                                        ssd1306_WriteString("-",font_8x14,1);                                   
-../Src/freertos.c(334): warning:  #188-D: enumerated type mixed with another type
-                                        ssd1306_WriteString("ление",font_8x15_RU,1);                                    
-../Src/freertos.c(336): warning:  #188-D: enumerated type mixed with another type
-                                        ssd1306_WriteString("ПО",font_8x15_RU,1);                                       
-../Src/freertos.c(337): warning:  #188-D: enumerated type mixed with another type
-                                        ssd1306_WriteString("...",font_8x14,1);
-../Src/freertos.c(344): warning:  #188-D: enumerated type mixed with another type
+../Src/freertos.c(351): warning:  #223-D: function "ssd1306_UpdateScreen" declared implicitly
+                                        ssd1306_UpdateScreen(); 
+../Src/freertos.c(356): warning:  #223-D: function "ssd1306_Fill" declared implicitly
                                         ssd1306_Fill(0);
-../Src/freertos.c(346): warning:  #188-D: enumerated type mixed with another type
+../Src/freertos.c(357): warning:  #223-D: function "ssd1306_SetCursor" declared implicitly
+                                        ssd1306_SetCursor(0,15);
+../Src/freertos.c(358): warning:  #223-D: function "ssd1306_WriteString" declared implicitly
                                         ssd1306_WriteString("УСПЕШНО",font_8x15_RU,1);                                                                          
-../Src/freertos.c(271): warning:  #177-D: variable "temp_stat" was declared but never referenced
+../Src/freertos.c(360): warning:  #223-D: function "ssd1306_UpdateScreen" declared implicitly
+                                        ssd1306_UpdateScreen(); 
+../Src/freertos.c(294): warning:  #177-D: variable "temp_stat" was declared but never referenced
         uint8_t temp_stat = 0;
-../Src/freertos.c(378): warning:  #167-D: argument of type "volatile uint8_t *" is incompatible with parameter of type "uint8_t *"
+../Src/freertos.c(390): warning:  #167-D: argument of type "volatile uint8_t *" is incompatible with parameter of type "uint8_t *"
                 HAL_UART_Receive_DMA(&huart2, boot_receiveBuffer, 8);
-../Src/freertos.c: 22 warnings, 0 errors
+../Src/freertos.c: 20 warnings, 0 errors
+compiling iwdg.c...
+compiling spi.c...
+compiling tim.c...
+compiling usart.c...
+compiling stm32l4xx_it.c...
+compiling stm32l4xx_hal_msp.c...
+compiling stm32l4xx_hal_timebase_TIM.c...
+compiling stm32l4xx_hal_iwdg.c...
+compiling stm32l4xx_hal_spi.c...
+compiling stm32l4xx_hal_spi_ex.c...
+compiling stm32l4xx_hal_tim.c...
+compiling stm32l4xx_hal_tim_ex.c...
+compiling stm32l4xx_hal_uart.c...
+compiling stm32l4xx_hal_uart_ex.c...
+compiling stm32l4xx_hal.c...
+compiling stm32l4xx_hal_i2c.c...
+compiling stm32l4xx_hal_i2c_ex.c...
+compiling stm32l4xx_hal_rcc.c...
+compiling stm32l4xx_hal_rcc_ex.c...
+compiling stm32l4xx_hal_flash.c...
+compiling stm32l4xx_hal_flash_ex.c...
+compiling stm32l4xx_hal_flash_ramfunc.c...
+compiling stm32l4xx_hal_gpio.c...
+compiling stm32l4xx_hal_dma.c...
+compiling stm32l4xx_hal_dma_ex.c...
+compiling stm32l4xx_hal_pwr.c...
+compiling stm32l4xx_hal_pwr_ex.c...
+compiling stm32l4xx_hal_cortex.c...
+compiling system_stm32l4xx.c...
 linking...
 PLC_481_L496_BOOTLOADER\PLC_481_L496_BOOTLOADER.axf: Warning: L6988W: Ignoring unknown patch sdcomp-29491-629360.
-Program Size: Code=22148 RO-data=5364 RW-data=188 ZI-data=13292  
+Program Size: Code=24108 RO-data=6420 RW-data=260 ZI-data=13308  
 Finished: 0 information, 1 warning and 0 error messages.
 FromELF: creating hex file...
 After Build - User command #1: fromelf --bin --output .\PLC_481_L496_BOOTLOADER.bin .\PLC_481_L496_BOOTLOADER\PLC_481_L496_BOOTLOADER.axf
-"PLC_481_L496_BOOTLOADER\PLC_481_L496_BOOTLOADER.axf" - 0 Error(s), 23 Warning(s).
+"PLC_481_L496_BOOTLOADER\PLC_481_L496_BOOTLOADER.axf" - 0 Error(s), 25 Warning(s).
 
 <h2>Software Packages used:</h2>
 

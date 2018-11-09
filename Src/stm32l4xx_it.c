@@ -37,7 +37,8 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN 0 */
-
+extern xSemaphoreHandle Semaphore_Modbus_Rx;
+extern xSemaphoreHandle Semaphore_Modbus_Tx;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -296,7 +297,24 @@ void USART1_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
+	if( (huart2.Instance->ISR & USART_ISR_IDLE) != RESET )
+	{		
+		
+			__HAL_UART_CLEAR_IT(&huart2, UART_CLEAR_IDLEF);
+			huart2.Instance->CR1 &= ~USART_CR1_IDLEIE;
+					
+			if( Semaphore_Modbus_Rx != NULL )
+			{
+						static signed portBASE_TYPE xHigherPriorityTaskWoken;
+						xHigherPriorityTaskWoken = pdFALSE;	
+						xSemaphoreGiveFromISR(Semaphore_Modbus_Rx, &xHigherPriorityTaskWoken);
+						if( xHigherPriorityTaskWoken == pdTRUE )
+						{
+								portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+						}									
+			}			
 
+	}	
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */

@@ -16,7 +16,7 @@ plc_481_l496_bootloader\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/i
 plc_481_l496_bootloader\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h
 plc_481_l496_bootloader\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h
 plc_481_l496_bootloader\freertos.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h
-plc_481_l496_bootloader\freertos.o: ..\Src\display\fonts.h
+plc_481_l496_bootloader\freertos.o: ../Inc/gpio.h
 plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h
 plc_481_l496_bootloader\freertos.o: ../Inc/stm32l4xx_hal_conf.h
 plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_rcc.h
@@ -42,6 +42,7 @@ plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4x
 plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash_ramfunc.h
 plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_i2c.h
 plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_i2c_ex.h
+plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_iwdg.h
 plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_pwr.h
 plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_pwr_ex.h
 plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_spi.h
@@ -50,8 +51,12 @@ plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4x
 plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim_ex.h
 plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart.h
 plc_481_l496_bootloader\freertos.o: ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart_ex.h
-plc_481_l496_bootloader\freertos.o: ..\Src\display\ssd1306.h
-plc_481_l496_bootloader\freertos.o: ..\Src\display\fonts.h
-plc_481_l496_bootloader\freertos.o: ../Inc/gpio.h
 plc_481_l496_bootloader\freertos.o: ../Src/Task_manager.h
+plc_481_l496_bootloader\freertos.o: ../Src/Flash_manager.h
+plc_481_l496_bootloader\freertos.o: ../Drivers/CMSIS/Include/arm_math.h
+plc_481_l496_bootloader\freertos.o: ../Drivers/CMSIS/Include/core_cm4.h
+plc_481_l496_bootloader\freertos.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+plc_481_l496_bootloader\freertos.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\math.h
 plc_481_l496_bootloader\freertos.o: ../Inc/usart.h
+plc_481_l496_bootloader\freertos.o: ..\Src\display\fonts.h
+plc_481_l496_bootloader\freertos.o: ../Inc/iwdg.h
