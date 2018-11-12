@@ -336,7 +336,7 @@ void Display_Task(void const * argument)
 					ssd1306_UpdateScreen();		
 				}
 				
-				if (worker_status == 3)
+				if (worker_status == 1 || worker_status == 2 || worker_status == 3)
 				{
 					ssd1306_Fill(0);
 					ssd1306_SetCursor(0,0);
